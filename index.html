@@ -77,6 +77,33 @@
     color: var(--text); text-decoration: none; font-weight: 600; font-size: 13px;
   }
   .brand:hover { border-color: var(--accent); }
+  .src-btn {
+    flex: none; display: inline-flex; align-items: center; gap: 6px; height: 38px; padding: 0 12px;
+    border-radius: 10px; border: 1px solid var(--line); background: transparent; color: var(--text);
+    font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
+  }
+  .src-btn:hover, .src-btn[aria-expanded="true"] { border-color: var(--accent); color: var(--accent); }
+  .src-btn svg { width: 17px; height: 17px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .modal-back {
+    position: fixed; inset: 0; z-index: 60; background: rgba(0,0,0,.55);
+    display: flex; align-items: center; justify-content: center; padding: 16px;
+  }
+  .modal-back[hidden] { display: none; }
+  .modal {
+    position: relative; width: min(680px, 100%); max-height: calc(100dvh - 32px); overflow-y: auto;
+    background: var(--card); color: var(--text); border: 1px solid var(--line); border-radius: 14px;
+    box-shadow: var(--shadow); padding: 20px 22px;
+  }
+  .modal h2 { margin: 0 0 4px; font-size: 18px; }
+  .modal > p { margin: 0 0 14px; color: var(--muted); font-size: 13px; }
+  .modal h3 { margin: 18px 0 8px; font-size: 11.5px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+  .modal ol { margin: 0; padding-left: 20px; display: grid; gap: 10px; font-size: 13.5px; }
+  .modal li span { display: block; color: var(--muted); font-size: 12.5px; margin-top: 2px; }
+  .modal-close {
+    position: absolute; top: 10px; right: 10px; width: 32px; height: 32px; border-radius: 8px;
+    border: 0; background: transparent; color: var(--muted); font-size: 22px; line-height: 1; cursor: pointer;
+  }
+  .modal-close:hover { background: var(--card-2); color: var(--text); }
   .brand img { width: 26px; height: 26px; }
   .brand span b { color: var(--accent); font-weight: 700; }
   .stage { position: relative; min-height: 0; min-width: 0; }
@@ -251,6 +278,8 @@
     .tb .lbl { display: none; }
     .brand span { display: none; }
     .brand { padding: 5px; }
+    .src-btn span { display: none; }
+    .src-btn { padding: 0 9px; }
     .scrub b { min-width: 0; max-width: 34%; }
     header.top .sub { display: none; }
   }
@@ -263,8 +292,12 @@
     <div class="titles">
       <h1>Bosutinib dans le site ATP de Bcr-Abl</h1>
       <div class="sub">Structure cristallographique PDB 3UE4 · interactions à pH physiologique (7,4)</div>
-      <div class="course">Conçu pour le TD du Prof. Scapozza · UNIGE 2026</div>
+      <div class="course">Conçu pour le TD SAR du Prof. Scapozza · UNIGE 2026</div>
     </div>
+    <button class="src-btn" id="btnSources" aria-haspopup="dialog" aria-expanded="false" aria-controls="sources" title="Sources scientifiques">
+      <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"/><path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5"/><path d="M9 7h7M9 11h5"/></svg>
+      <span>Sources</span>
+    </button>
     <a class="brand" href="https://pharmakinase.com" target="_blank" rel="noopener" title="Pharmakinase.com">
       <img class="pk-logo" alt=""><span>Pharma<b>kinase</b>.com</span>
     </a>
@@ -393,6 +426,38 @@
       <p>L'animation d'entrée est schématique : le ligand glisse vers sa position cristallographique, il ne simule pas le vrai chemin de liaison.</p>
     </section>
   </aside>
+</div>
+
+<div class="modal-back" id="sources" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="sourcesTitle">
+    <button class="modal-close" id="sourcesClose" aria-label="Fermer les sources">×</button>
+    <h2 id="sourcesTitle">Sources scientifiques</h2>
+    <p>Ce qui a servi à construire la scène 3D et à décrire les interactions.</p>
+
+    <h3>Structure 3D</h3>
+    <ol>
+      <li><a href="https://www.rcsb.org/structure/3UE4" target="_blank" rel="noopener">PDB 3UE4</a> — domaine kinase d'Abl en complexe avec le bosutinib (structure cristallographique, RCSB Protein Data Bank).
+        <span>Coordonnées chargées en direct à l'ouverture de la page (miroir PDBe en secours).</span></li>
+      <li>Levinson N. M. &amp; Boxer S. G. (2012). <i>Structural and spectroscopic analysis of the kinase inhibitor bosutinib and an isomer of bosutinib binding to the Abl tyrosine kinase domain.</i> PLoS One. <a href="https://pubmed.ncbi.nlm.nih.gov/?term=Levinson+Boxer+bosutinib+Abl+2012" target="_blank" rel="noopener">PubMed</a>
+        <span>Article qui décrit la structure 3UE4.</span></li>
+      <li><a href="https://www.rcsb.org/ligand/DB8" target="_blank" rel="noopener">Composant chimique DB8</a> (bosutinib) — dictionnaire des composants chimiques du PDB.</li>
+      <li><a href="https://www.uniprot.org/uniprotkb/P00519/entry" target="_blank" rel="noopener">UniProt P00519</a> (ABL1 humaine) — séquence de référence ; numérotation Abl isoforme 1a (Thr315, Met318…).</li>
+    </ol>
+
+    <h3>Interactions</h3>
+    <ol>
+      <li>Énoncé « Exercice interactions intermoléculaires » — TD SAR du Prof. Scapozza, UNIGE 2026 : liste des acides aminés du site et partie impliquée (chaîne principale ou latérale).</li>
+      <li>Distances et partenaires mesurés par la page sur les coordonnées de 3UE4, avec des critères géométriques usuels : liaison H ≤ 3,5 Å entre atomes lourds, pont salin ≤ 4 Å, empilement π–π à ≤ 5,5 Å entre centres de cycles, contact hydrophobe ≤ 4,5 Å.
+        <span>Seuils du même ordre que ceux de PLIP : Salentin S. <i>et al.</i> (2015). <i>PLIP: fully automated protein–ligand interaction profiler.</i> Nucleic Acids Research 43(W1), W443–W447. <a href="https://doi.org/10.1093/nar/gkv315" target="_blank" rel="noopener">doi:10.1093/nar/gkv315</a></span></li>
+      <li>États d'ionisation à pH 7,4 : pKa de la chaîne latérale de l'aspartate ≈ 3,9 et de la N-méthylpipérazine ≈ 8 (valeurs usuelles des manuels de biochimie et de chimie médicinale).</li>
+      <li><a href="https://pubchem.ncbi.nlm.nih.gov/compound/Bosutinib" target="_blank" rel="noopener">PubChem — Bosutinib</a> : structure et propriétés du ligand.</li>
+    </ol>
+
+    <h3>Logiciel</h3>
+    <ol>
+      <li>Rego N. &amp; Koes D. (2015). <i>3Dmol.js: molecular visualization with WebGL.</i> Bioinformatics 31(8), 1322–1324. <a href="https://doi.org/10.1093/bioinformatics/btu829" target="_blank" rel="noopener">doi:10.1093/bioinformatics/btu829</a></li>
+    </ol>
+  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/3dmol@2.5.5/build/3Dmol-min.js"></script>
@@ -938,7 +1003,16 @@ if (!window.$3Dmol) document.write('<script src="https://unpkg.com/3dmol@2.5.5/b
     });
     $('btnHelp').addEventListener('click', function () { toggleHelp(); });
     $('hintClose').addEventListener('click', function () { toggleHelp(false); $('btnHelp').focus(); });
+    function toggleSources(open) {
+      $('sources').hidden = !open;
+      $('btnSources').setAttribute('aria-expanded', open ? 'true' : 'false');
+      if (open) $('sourcesClose').focus(); else $('btnSources').focus();
+    }
+    $('btnSources').addEventListener('click', function () { toggleSources(true); });
+    $('sourcesClose').addEventListener('click', function () { toggleSources(false); });
+    $('sources').addEventListener('click', function (ev) { if (ev.target === $('sources')) toggleSources(false); });
     document.addEventListener('keydown', function (ev) {
+      if (!$('sources').hidden) { if (ev.key === 'Escape') toggleSources(false); return; }
       if (ev.key === 'Escape' && !$('hint').hidden) { toggleHelp(false); return; }
       if (ev.key.toLowerCase() === 'h' && !ev.ctrlKey && !ev.metaKey && !ev.altKey) { toggleHelp(); return; }
       if (!model || ev.ctrlKey || ev.metaKey || ev.altKey) return;
