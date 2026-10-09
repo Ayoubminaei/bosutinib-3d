@@ -23,6 +23,8 @@ Page interactive pour l'exercice « interactions intermoléculaires » : le bosu
 
 Aucune installation : un navigateur récent suffit. La structure est téléchargée depuis la [Protein Data Bank](https://www.rcsb.org/structure/3UE4) à l'ouverture.
 
+Réalisé par [Pharmakinase.com](https://pharmakinase.com) — fiches, quiz et schémas interactifs pour les études de pharmacie.
+
 ## Sources
 
 - Structure : PDB 3UE4 — Levinson N. M. & Boxer S. G., *PLoS One* 2012.
