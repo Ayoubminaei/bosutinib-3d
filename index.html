@@ -76,7 +76,6 @@
     padding: 5px 10px 5px 6px; border-radius: 10px; border: 1px solid var(--line);
     color: var(--text); text-decoration: none; font-weight: 600; font-size: 13px;
   }
-  .brand:hover { border-color: var(--accent); }
   .src-btn {
     flex: none; display: inline-flex; align-items: center; gap: 6px; height: 38px; padding: 0 12px;
     border-radius: 10px; border: 1px solid var(--line); background: transparent; color: var(--text);
@@ -298,9 +297,9 @@
       <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"/><path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5"/><path d="M9 7h7M9 11h5"/></svg>
       <span>Sources</span>
     </button>
-    <a class="brand" href="https://pharmakinase.com" target="_blank" rel="noopener" title="Pharmakinase.com">
+    <div class="brand" aria-label="Pharmakinase.com">
       <img class="pk-logo" alt=""><span>Pharma<b>kinase</b>.com</span>
-    </a>
+    </div>
   </header>
 
   <main class="stage">
