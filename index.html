@@ -50,7 +50,7 @@
   }
   .app {
     display: grid;
-    grid-template-columns: 1fr 360px;
+    grid-template-columns: minmax(0, 1fr) 360px;
     grid-template-rows: auto 1fr;
     height: 100vh;
     height: 100dvh;
@@ -272,7 +272,7 @@
   a { color: var(--accent); }
 
   @media (max-width: 860px) {
-    .app { grid-template-columns: 1fr; grid-template-rows: auto 62vh auto; height: auto; }
+    .app { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto 62vh auto; height: auto; }
     aside.panel { border-left: 0; border-top: 1px solid var(--line); overflow: visible; }
     .toolbar { top: 8px; }
     .tb .lbl { display: none; }
