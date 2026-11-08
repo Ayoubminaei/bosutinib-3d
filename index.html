@@ -923,8 +923,6 @@ if (!window.$3Dmol) document.write('<script src="https://unpkg.com/3dmol@2.5.5/b
       li.tabIndex = 0;
       li.setAttribute('role', 'button');
       var found = t.all.length;
-      var renum = found && t.foundResi !== t.resi
-        ? '<div class="note">Dans le fichier PDB, cet acide aminé est numéroté <b>' + t.code + t.foundResi + '</b> (aucun ' + t.code + ' en position ' + t.resi + ') : c\'est lui qui fait face à la pipérazine.</div>' : '';
       li.innerHTML =
         '<span class="dot" style="background:' + (found ? typeColor(t.shown) : 'var(--line)') + '"></span>' +
         '<span class="name">' + t.aa + ' ' + t.resi + '<small>' + (t.part === 'main' ? 'chaîne principale' : 'chaîne latérale') + '</small></span>' +
@@ -933,7 +931,7 @@ if (!window.$3Dmol) document.write('<script src="https://unpkg.com/3dmol@2.5.5/b
           ? '<div class="meta"><strong>' + TYPES[t.shown].label + '</strong> — ' + (t.detail || '') +
             (t.segments[0] && t.type !== 'pi' && t.shown !== 'pi' && !t.waters.length ? ' · ' + fmt(t.segments[0][2]) : '') + '</div>' +
             '<div class="meta">' + t.why + '</div>' +
-            (t.note ? '<div class="note">' + t.note + '</div>' : '') + renum
+            (t.note ? '<div class="note">' + t.note + '</div>' : '')
           : '<div class="note">Résidu absent du modèle cristallographique.</div>');
       li.querySelector('.eye').addEventListener('click', function (ev) {
         ev.stopPropagation();
