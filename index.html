@@ -454,7 +454,7 @@ if (!window.$3Dmol) document.write('<script src="https://unpkg.com/3dmol@2.5.5/b
   // Ce que l'exercice demande : résidu, partie impliquée, type attendu.
   var TARGETS = [
     { resn: 'MET', resi: 318, aa: 'Méthionine', code: 'Met', part: 'main', type: 'hbond', atoms: ['N'],
-      why: 'Le N–H du squelette donne sa liaison H au N1 de la quinoléine : c\'est l\'ancrage à la charnière (hinge).' },
+      why: 'Le N–H du squelette donne sa liaison H au N1 de la quinoléine.' },
     { resn: 'THR', resi: 315, aa: 'Thréonine', code: 'Thr', part: 'side', type: 'hbond', atoms: ['OG1'],
       why: 'Le OH du gardien (gatekeeper) est à la fois donneur et accepteur de liaison H.' },
     { resn: 'PHE', resi: 317, aa: 'Phénylalanine', code: 'Phe', part: 'side', type: 'pi', atoms: RING,
@@ -623,6 +623,16 @@ if (!window.$3Dmol) document.write('<script src="https://unpkg.com/3dmol@2.5.5/b
     return best;
   }
 
+  // Position du H d'un N–H de liaison peptidique : dans le plan C(i−1)–N–CA,
+  // sur la bissectrice extérieure, à 1,01 Å du N.
+  function amideH(n, t) {
+    var ca = t.all.filter(function (a) { return a.atom === 'CA'; })[0];
+    var c = model.selectedAtoms({ chain: ligChain, resi: t.foundResi - 1, atom: 'C', hetflag: false })[0];
+    if (!ca || !c) return null;
+    var dir = unit(add(unit(sub(n, c)), unit(sub(n, ca))));
+    return add(v(n), mul(dir, 1.01));
+  }
+
   // Mesure de chaque interaction sur les coordonnées cristallographiques.
   function measure(t) {
     var atoms = t.all;
@@ -635,8 +645,18 @@ if (!window.$3Dmol) document.write('<script src="https://unpkg.com/3dmol@2.5.5/b
       var m = minDist(sel, ligAtoms, null, polar);
       t.partner = describeLigAtom(m.ib);
       if (m.d <= 3.5) {
-        t.segments.push([v(m.a), v(m.b), m.d]);
-        t.detail = 'avec ' + t.partner;
+        var h = m.a.atom === 'N' ? amideH(m.a, t) : null;
+        if (h) {
+          // Les rayons X ne voient pas les H : on place celui du N–H par calcul,
+          // et la liaison H est dessinée du H vers l'accepteur.
+          t.hydrogen = { n: v(m.a), h: h };
+          t.segments.push([h, v(m.b), m.d]);
+          t.detail = 'avec ' + t.partner;
+          t.note = 'N···N ' + fmt(m.d) + ', H···N ' + fmt(dist(h, m.b)) + '. Le H (sphère blanche) n\'est pas visible aux rayons X : sa position est calculée.';
+        } else {
+          t.segments.push([v(m.a), v(m.b), m.d]);
+          t.detail = 'avec ' + t.partner;
+        }
       } else {
         // Liaison H relayée par une molécule d'eau ?
         var waters = model.selectedAtoms({ resn: 'HOH' });
@@ -766,11 +786,14 @@ if (!window.$3Dmol) document.write('<script src="https://unpkg.com/3dmol@2.5.5/b
       : { stick: { radius: 0.2, colorscheme: { prop: 'elem', map: map } }, sphere: { scale: 0.25, colorscheme: { prop: 'elem', map: map } } });
   }
 
+  // L'étiquette se place sur l'atome du résidu le plus éloigné du ligand :
+  // elle ne recouvre jamais l'atome qui fait l'interaction.
   function labelAnchor(t) {
-    var ca = t.all.filter(function (a) { return a.atom === 'CA'; })[0] || t.all[0];
-    if (t.part === 'main') return v(t.all.filter(function (a) { return a.atom === 'N'; })[0] || ca);
-    var far = ca, fd = -1;
-    t.all.forEach(function (a) { var d = dist(a, ca); if (d > fd) { fd = d; far = a; } });
+    var far = t.all[0], fd = -1;
+    t.all.forEach(function (a) {
+      var d = minDist([a], ligAtoms).d;
+      if (d > fd) { fd = d; far = a; }
+    });
     return v(far);
   }
 
@@ -794,6 +817,10 @@ if (!window.$3Dmol) document.write('<script src="https://unpkg.com/3dmol@2.5.5/b
           viewer.addCylinder({ start: s[0], end: s[1], radius: 0.06, color: col, dashed: true, fromCap: 1, toCap: 1 });
         });
         (t.centers || []).forEach(function (c) { viewer.addSphere({ center: c, radius: 0.18, color: col }); });
+      }
+      if (t.hydrogen) {
+        viewer.addCylinder({ start: t.hydrogen.n, end: t.hydrogen.h, radius: 0.1, color: '#f1f5f9', fromCap: 1, toCap: 1 });
+        viewer.addSphere({ center: t.hydrogen.h, radius: 0.2, color: '#f1f5f9' });
       }
     });
     // Pendant l'animation, l'étiquette du ligand ne suivrait pas : elle revient à l'arrivée.
