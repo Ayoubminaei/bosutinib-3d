@@ -73,7 +73,7 @@
   /* Signature Pharmakinase.com dans l'en-tête */
   .brand {
     flex: none; display: inline-flex; align-items: center; gap: 8px;
-    padding: 5px 10px 5px 6px; border-radius: 10px; border: 1px solid var(--line);
+    padding: 5px; border-radius: 10px; border: 1px solid var(--line);
     color: var(--text); text-decoration: none; font-weight: 600; font-size: 13px;
   }
   .src-btn {
@@ -104,7 +104,6 @@
   }
   .modal-close:hover { background: var(--card-2); color: var(--text); }
   .brand img { width: 26px; height: 26px; }
-  .brand span b { color: var(--accent); font-weight: 700; }
   .stage { position: relative; min-height: 0; min-width: 0; }
   #viewer { position: absolute; inset: 0; background: var(--viewer-bg); }
   #viewer canvas { outline: none; }
@@ -275,8 +274,6 @@
     aside.panel { border-left: 0; border-top: 1px solid var(--line); overflow: visible; }
     .toolbar { top: 8px; }
     .tb .lbl { display: none; }
-    .brand span { display: none; }
-    .brand { padding: 5px; }
     .src-btn span { display: none; }
     .src-btn { padding: 0 9px; }
     .scrub b { min-width: 0; max-width: 34%; }
@@ -297,8 +294,8 @@
       <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"/><path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5"/><path d="M9 7h7M9 11h5"/></svg>
       <span>Sources</span>
     </button>
-    <div class="brand" aria-label="Pharmakinase.com">
-      <img class="pk-logo" alt=""><span>Pharma<b>kinase</b>.com</span>
+    <div class="brand" role="img" aria-label="Pharmakinase" title="Pharmakinase">
+      <img class="pk-logo" alt="">
     </div>
   </header>
 
@@ -482,6 +479,8 @@ if (!window.$3Dmol) document.write('<script src="https://unpkg.com/3dmol@2.5.5/b
   var viewer, model, ligModel, ligAtoms = [], ligChain, ligResi, ligGraph, ligRings = [];
   var pathDir = null, tumbleAxis = null, ligCenter = null;
   var rafId = null;
+  var MIN_ZOOM = 12, MAX_ZOOM = 400; // distances caméra limites (Å), recalculées au chargement
+  var clampTimer = null;
   var hasWebGL = true;
 
   var $ = function (id) { return document.getElementById(id); };
@@ -785,9 +784,9 @@ if (!window.$3Dmol) document.write('<script src="https://unpkg.com/3dmol@2.5.5/b
       if (state.labels) {
         var txt = t.code + t.resi + (t.foundResi !== t.resi ? ' (' + t.foundResi + ')' : '');
         viewer.addLabel(txt, {
-          position: labelAnchor(t), backgroundColor: col, backgroundOpacity: 0.95, fontColor: '#06121f',
-          fontSize: 13, font: 'Inter, Arial, sans-serif', borderRadius: 6, inFront: true, showBackground: true,
-          screenOffset: { x: 0, y: -14 }, alignment: 'bottomCenter'
+          position: labelAnchor(t), backgroundColor: col, backgroundOpacity: 0.85, fontColor: '#06121f',
+          fontSize: 10, font: 'Inter, Arial, sans-serif', borderRadius: 4, padding: 1, inFront: true, showBackground: true,
+          screenOffset: { x: 0, y: -8 }, alignment: 'bottomCenter'
         });
       }
       if (state.inter && done) {
@@ -801,8 +800,8 @@ if (!window.$3Dmol) document.write('<script src="https://unpkg.com/3dmol@2.5.5/b
     if (state.labels && !state.playing) {
       var lc = add(ligCenter, mul(pathDir, (1 - easeInOut(state.progress)) * 22));
       viewer.addLabel('Bosutinib', {
-        position: lc, backgroundColor: LIG_C, backgroundOpacity: 0.95, fontColor: '#06121f', fontSize: 13,
-        font: 'Inter, Arial, sans-serif', inFront: true, showBackground: true, screenOffset: { x: 0, y: 26 }, alignment: 'topCenter'
+        position: lc, backgroundColor: LIG_C, backgroundOpacity: 0.95, fontColor: '#06121f', fontSize: 10,
+        font: 'Inter, Arial, sans-serif', borderRadius: 4, padding: 1, inFront: true, showBackground: true, screenOffset: { x: 0, y: 18 }, alignment: 'topCenter'
       });
     }
   }
@@ -925,7 +924,14 @@ if (!window.$3Dmol) document.write('<script src="https://unpkg.com/3dmol@2.5.5/b
   }
   var actions = {
     play: play,
-    zoomIn: function () { viewer.zoom(1.3, 250); },
+    zoomIn: function () {
+      // viewer.zoom() ignore les limites : on borne nous-mêmes le facteur.
+      var f = Math.min(1.3, viewer.getPerceivedDistance() / MIN_ZOOM);
+      if (f > 1.01) viewer.zoom(f, 250);
+      // Des clics rapides enchaînent les animations : on recadre une fois qu'elles sont finies.
+      clearTimeout(clampTimer);
+      clampTimer = setTimeout(function () { viewer.setZoomLimits(MIN_ZOOM, MAX_ZOOM); }, 320);
+    },
     zoomOut: function () { viewer.zoom(1 / 1.3, 250); },
     reset: resetView,
     labels: function () { state.labels = !state.labels; setPressed('btnLabels', state.labels); drawOverlays(); viewer.render(); },
@@ -1078,7 +1084,11 @@ if (!window.$3Dmol) document.write('<script src="https://unpkg.com/3dmol@2.5.5/b
     viewer.zoomTo(pathSelection());
     var farView = viewer.getPerceivedDistance();
     viewer.zoomTo(pocketSelection());
-    viewer.setZoomLimits(0, Math.max(viewer.getPerceivedDistance() * 2.5, farView * 1.15));
+    // Limite du zoom avant : on s'arrête quand un acide aminé remplit l'écran.
+    var pocketView = viewer.getPerceivedDistance();
+    MIN_ZOOM = Math.max(12, pocketView * 0.4);
+    MAX_ZOOM = Math.max(pocketView * 2.5, farView * 1.15);
+    viewer.setZoomLimits(MIN_ZOOM, MAX_ZOOM);
     viewer.render();
     wireHover();
     $('overlay').hidden = true;
