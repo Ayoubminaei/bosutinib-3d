@@ -456,7 +456,7 @@ if (!window.$3Dmol) document.write('<script src="https://unpkg.com/3dmol@2.5.5/b
     { resn: 'MET', resi: 318, aa: 'Méthionine', code: 'Met', part: 'main', type: 'hbond', atoms: ['N'],
       why: 'Le N–H du squelette donne sa liaison H au N1 de la quinoléine.' },
     { resn: 'THR', resi: 315, aa: 'Thréonine', code: 'Thr', part: 'side', type: 'hbond', atoms: ['OG1'],
-      why: 'Le OH du gardien (gatekeeper) est à la fois donneur et accepteur de liaison H.' },
+      why: 'Le O–H de la chaîne latérale donne sa liaison H au N du nitrile (C≡N).' },
     { resn: 'PHE', resi: 317, aa: 'Phénylalanine', code: 'Phe', part: 'side', type: 'pi', atoms: RING,
       why: 'Son cycle aromatique s\'empile sur le système bicyclique de la quinoléine.' },
     { resn: 'TYR', resi: 320, aa: 'Tyrosine', code: 'Tyr', part: 'side', type: 'hydro', atoms: ['CB', 'CG', 'CD1', 'CD2', 'CE1', 'CE2', 'CZ'],
@@ -632,6 +632,19 @@ if (!window.$3Dmol) document.write('<script src="https://unpkg.com/3dmol@2.5.5/b
     var dir = unit(add(unit(sub(n, c)), unit(sub(n, ca))));
     return add(v(n), mul(dir, 1.01));
   }
+  // Position du H d'un O–H (Ser, Thr, Tyr) : angle C–O–H de 109,5°, O–H 0,97 Å,
+  // tourné vers l'accepteur (le O–H peut pivoter autour de la liaison C–O).
+  var OH_PARENT = { OG1: 'CB', OG: 'CB', OH: 'CZ' };
+  function hydroxylH(o, acc, t) {
+    var cName = OH_PARENT[o.atom];
+    var c = cName && t.all.filter(function (a) { return a.atom === cName; })[0];
+    if (!c) return null;
+    var axis = unit(sub(o, c));
+    var toAcc = sub(acc, o);
+    var perp = unit(sub(toAcc, mul(axis, dot(toAcc, axis))));
+    var ang = (180 - 109.5) * Math.PI / 180;
+    return add(v(o), mul(add(mul(axis, Math.cos(ang)), mul(perp, Math.sin(ang))), 0.97));
+  }
 
   // Mesure de chaque interaction sur les coordonnées cristallographiques.
   function measure(t) {
@@ -645,18 +658,16 @@ if (!window.$3Dmol) document.write('<script src="https://unpkg.com/3dmol@2.5.5/b
       var m = minDist(sel, ligAtoms, null, polar);
       t.partner = describeLigAtom(m.ib);
       if (m.d <= 3.5) {
-        var h = m.a.atom === 'N' ? amideH(m.a, t) : null;
+        // Les rayons X ne voient pas les H : on place celui du donneur par calcul,
+        // et la liaison H est dessinée du H vers l'accepteur.
+        var h = m.a.atom === 'N' ? amideH(m.a, t) : hydroxylH(m.a, m.b, t);
         if (h) {
-          // Les rayons X ne voient pas les H : on place celui du N–H par calcul,
-          // et la liaison H est dessinée du H vers l'accepteur.
           t.hydrogen = { n: v(m.a), h: h };
           t.segments.push([h, v(m.b), m.d]);
-          t.detail = 'avec ' + t.partner;
-          t.note = 'N···N ' + fmt(m.d) + ', H···N ' + fmt(dist(h, m.b)) + '. Le H (sphère blanche) n\'est pas visible aux rayons X : sa position est calculée.';
         } else {
           t.segments.push([v(m.a), v(m.b), m.d]);
-          t.detail = 'avec ' + t.partner;
         }
+        t.detail = 'avec ' + t.partner;
       } else {
         // Liaison H relayée par une molécule d'eau ?
         var waters = model.selectedAtoms({ resn: 'HOH' });
