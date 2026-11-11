@@ -196,6 +196,44 @@
     padding: 5px 8px; font-size: 12px; box-shadow: var(--shadow);
     display: none; white-space: nowrap;
   }
+  /* Fiche d'un atome (ouverte au clic dans la scène) */
+  .atom-card {
+    position: absolute; left: 12px; top: 62px; z-index: 7;
+    width: min(350px, calc(100% - 24px)); max-height: calc(100% - 136px); overflow-y: auto;
+    background: var(--card);
+    border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow);
+    font-size: 13px; animation: cardIn .18s ease-out;
+  }
+  .atom-card[hidden] { display: none; }
+  @keyframes cardIn { from { opacity: 0; transform: translateY(6px); } }
+  .ac-head { display: flex; gap: 12px; align-items: center; padding: 14px 44px 12px 14px; border-bottom: 1px solid var(--line); }
+  .ac-el {
+    flex: none; width: 42px; height: 42px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 16px; color: #06121f;
+    box-shadow: inset 0 -6px 10px rgba(0,0,0,.22), inset 0 4px 6px rgba(255,255,255,.35);
+  }
+  .ac-head h3 { margin: 0; font-size: 15px; line-height: 1.25; }
+  .ac-head .ac-sub { color: var(--muted); font-size: 12px; margin-top: 2px; }
+  .ac-body { padding: 4px 14px 14px; }
+  .ac-body h4 { margin: 14px 0 6px; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 600; }
+  .ac-body p { margin: 0; }
+  .ac-hb { display: grid; grid-template-columns: auto 1fr; gap: 3px 10px; align-items: start; padding: 9px 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--card-2); }
+  .ac-hb + .ac-hb { margin-top: 6px; }
+  .ac-hb .role { font-weight: 600; }
+  .ac-hb .why { grid-column: 1 / -1; color: var(--muted); font-size: 12.5px; }
+  .ac-badge { justify-self: end; font-size: 11.5px; font-weight: 700; padding: 1px 9px; border-radius: 999px; border: 1px solid currentColor; }
+  .ac-badge.yes { color: var(--yes); } .ac-badge.no { color: var(--no); }
+  .ac-badge.weak, .ac-badge.maybe { color: var(--hydro); }
+  .ac-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+  .ac-list li { display: grid; grid-template-columns: 10px 1fr; gap: 8px; align-items: start; }
+  .ac-list i { width: 10px; height: 10px; border-radius: 3px; margin-top: 5px; background: var(--muted); }
+  .ac-list b { font-weight: 600; }
+  .ac-xtal { padding: 9px 10px; border-radius: 10px; border: 1px dashed var(--line); display: grid; gap: 6px; }
+  .ac-xtal .muted { font-size: 12.5px; }
+  :root { --yes: #4ade80; --no: #f87171; }
+  :root[data-theme="light"] { --yes: #15803d; --no: #dc2626; }
+
   .overlay {
     position: absolute; inset: 0; z-index: 8;
     display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 14px;
@@ -277,6 +315,7 @@
     .src-btn span { display: none; }
     .src-btn { padding: 0 9px; }
     .scrub b { min-width: 0; max-width: 34%; }
+    .atom-card { position: fixed; left: 8px; right: 8px; top: auto; bottom: 8px; width: auto; max-height: 58dvh; z-index: 50; }
     header.top .sub { display: none; }
   }
   @media (prefers-reduced-motion: reduce) { .spinner { animation: none; } }
@@ -335,10 +374,20 @@
         <li><span>Glisser</span> rotation</li>
         <li><span>Molette / pincement</span> zoom</li>
         <li><span>Clic droit ou Ctrl + glisser</span> déplacer</li>
-        <li><span>Clic sur un acide aminé</span> zoom dessus</li>
+        <li><span>Clic sur un atome</span> fiche : liaisons possibles</li>
+        <li><span>Clic sur une carte de la liste</span> zoom sur l'acide aminé</li>
       </ul>
     </div>
     <div class="tooltip" id="tooltip"></div>
+
+    <div class="atom-card" id="atomCard" role="dialog" aria-labelledby="acTitle" hidden>
+      <button class="modal-close" id="acClose" aria-label="Fermer la fiche">×</button>
+      <div class="ac-head">
+        <div class="ac-el" id="acEl"></div>
+        <div><h3 id="acTitle"></h3><div class="ac-sub" id="acSub"></div></div>
+      </div>
+      <div class="ac-body" id="acBody"></div>
+    </div>
 
     <div class="overlay" id="overlay">
       <div class="spinner" id="spinner"></div>
@@ -370,7 +419,7 @@
         <button class="btn" id="allOff">Tout cacher</button>
       </div>
       <ul class="res-list" id="resList"></ul>
-      <p class="small muted" style="margin-top:10px">Cliquer sur une carte zoome sur l'acide aminé ; l'œil le montre ou le cache. Les distances sont mesurées en direct sur la structure cristallographique.</p>
+      <p class="small muted" style="margin-top:10px">Cliquer sur une carte zoome sur l'acide aminé ; l'œil le montre ou le cache. <b>Dans la scène, cliquer sur un atome</b> (du bosutinib ou d'un acide aminé) ouvre sa fiche : peut-il faire une liaison H, et pourquoi. Les distances sont mesurées en direct sur la structure cristallographique.</p>
     </section>
 
     <section class="section">
@@ -650,12 +699,13 @@ if (!window.$3Dmol) document.write('<script src="https://unpkg.com/3dmol@2.5.5/b
   function measure(t) {
     var atoms = t.all;
     var sel = atoms.filter(function (a) { return t.atoms.indexOf(a.atom) >= 0; });
-    t.segments = []; t.waters = []; t.note = ''; t.shown = t.type;
+    t.segments = []; t.waters = []; t.note = ''; t.shown = t.type; t.ligIdx = -1; t.ligRing = null;
     if (!sel.length) { t.note = 'Atomes non résolus dans la structure.'; return; }
 
     if (t.type === 'hbond') {
       var polar = function (b) { var e = elem(b); return e === 'N' || e === 'O'; };
       var m = minDist(sel, ligAtoms, null, polar);
+      t.ligIdx = m.ib;
       t.partner = describeLigAtom(m.ib);
       if (m.d <= 3.5) {
         // Les rayons X ne voient pas les H : on place celui du donneur par calcul,
@@ -684,6 +734,7 @@ if (!window.$3Dmol) document.write('<script src="https://unpkg.com/3dmol@2.5.5/b
         });
         if (bridge) {
           t.partner = describeLigAtom(bridge.ib);
+          t.ligIdx = bridge.ib;
           t.segments.push([v(bridge.a), v(bridge.w), bridge.dA], [v(bridge.w), v(bridge.b), bridge.dB]);
           t.waters.push(bridge.w);
           t.detail = 'avec ' + t.partner + ', <strong>relayée par une molécule d\'eau</strong>';
@@ -698,10 +749,13 @@ if (!window.$3Dmol) document.write('<script src="https://unpkg.com/3dmol@2.5.5/b
     }
 
     if (t.type === 'ionic') {
-      var cation = function (b, ib) { return elem(b) === 'N' && inRing(ib) && !inAromaticRing(ib); };
-      var mi = minDist(sel, ligAtoms, null, cation);
+      var ringN = function (b, ib) { return elem(b) === 'N' && inRing(ib) && !inAromaticRing(ib); };
+      // La charge + est portée par le N-méthyl (le plus basique des deux N de la pipérazine).
+      var mi = minDist(sel, ligAtoms, null, function (b, ib) { return ringN(b, ib) && ligGraph[ib].some(isMethyl); });
+      if (!mi.a) mi = minDist(sel, ligAtoms, null, ringN);
       if (!mi.a) mi = minDist(sel, ligAtoms, null, function (b) { return elem(b) === 'N'; });
       t.partner = describeLigAtom(mi.ib);
+      t.ligIdx = mi.ib;
       t.segments.push([v(mi.a), v(mi.b), mi.d]);
       t.detail = 'entre le COO⁻ et ' + t.partner;
       if (mi.d > 4.0) t.note = 'Distance mesurée ' + fmt(mi.d) + ' : attraction électrostatique à longue portée (la pipérazine, tournée vers le solvant, est mobile dans le cristal).';
@@ -723,6 +777,7 @@ if (!window.$3Dmol) document.write('<script src="https://unpkg.com/3dmol@2.5.5/b
         if (best && best.d <= 5.5) {
           var ang = Math.acos(Math.min(1, Math.abs(dot(n, best.r.normal)))) * 180 / Math.PI;
           t.shown = 'pi';
+          t.ligRing = best.r;
           t.centers = [c, best.r.center];
           t.segments.push([c, best.r.center, best.d]);
           t.partner = best.r.name;
@@ -738,12 +793,268 @@ if (!window.$3Dmol) document.write('<script src="https://unpkg.com/3dmol@2.5.5/b
     var mh = minDist(sel, ligAtoms, apolar, apolar);
     if (!mh.a) mh = minDist(sel, ligAtoms);
     t.shown = 'hydro';
+    t.ligIdx = mh.ib;
     t.partner = describeLigAtom(mh.ib);
     t.segments.push([v(mh.a), v(mh.b), mh.d]);
     t.detail = 'contact avec ' + t.partner;
     if (t.type === 'pi') t.note = 'Centres des cycles à plus de 5,5 Å : contact hydrophobe plutôt qu\'un empilement π strict.';
     if (mh.d > 4.5) t.note = 'Plus courte distance ' + fmt(mh.d) + ' : contact de van der Waals lâche.';
   }
+
+  // ───────────────────────── Fiches des atomes ─────────────────────────
+  // Chaque fiche répond à : cet atome peut-il donner / accepter une liaison H,
+  // pourquoi, quelles autres interactions sont possibles, et que voit-on dans le cristal.
+  var NO_H = 'Il ne porte aucun H : rien à donner.';
+  var C_DON = 'La liaison C–H est presque apolaire (électronégativités de C et H voisines) : le H n\'est pas assez δ⁺ pour être donné.';
+  var C_ACC = 'Le carbone n\'a pas de doublet libre.';
+  var HYDRO = { t: 'hydro', txt: '<b>Hydrophobe / van der Waals</b> — contact avec d\'autres groupes apolaires, à l\'abri de l\'eau.' };
+  var PISTACK = { t: 'pi', txt: '<b>Empilement π–π</b> — avec le cycle aromatique d\'une Phe, Tyr, Trp ou His.' };
+  var CATPI = { t: 'ionic', txt: '<b>Cation–π</b> — la face du cycle, riche en électrons, peut attirer un cation (Lys, Arg).' };
+  function carbonInfo(title, kind, others) {
+    return { title: title, kind: kind, state: 'Neutre, non ionisable.', donor: ['no', C_DON], acceptor: ['no', C_ACC], others: others || [HYDRO] };
+  }
+
+  function ligInfo(i) {
+    var e = elem(ligAtoms[i]), nb = ligGraph[i], info;
+    var ring = ligRings.filter(function (x) { return x.idx.indexOf(i) >= 0; })[0];
+    var group = [i];
+    if (e === 'N') {
+      if (nb.length === 1) {
+        group = [i, nb[0]];
+        info = { title: 'N du nitrile (C≡N)', kind: 'Azote sp, triple liaison', state: 'Neutre : un nitrile n\'est pas basique dans l\'eau.',
+          donor: ['no', NO_H],
+          acceptor: ['yes', 'Son doublet libre pointe dans l\'axe de C≡N et peut capter un H. Accepteur plus modeste qu\'un N sp² ou sp³ : un doublet sp est très retenu par le noyau.'],
+          others: [{ t: 'dipole', txt: '<b>Dipôle</b> — C≡N est fortement polarisé (Cδ⁺≡Nδ⁻) : interactions dipôle–dipôle.' }] };
+      } else if (inAromaticRing(i)) {
+        info = { title: 'N1 de la quinoléine', kind: 'Azote aromatique sp² (type pyridine)', state: 'Non protoné à pH 7,4 (pKa de l\'acide conjugué bas) : neutre.',
+          donor: ['no', NO_H],
+          acceptor: ['yes', 'Son doublet libre est dans le plan du cycle, en dehors du système π : il reste entièrement disponible pour capter un H.'],
+          others: [PISTACK] };
+      } else if (inRing(i) && nb.some(isMethyl)) {
+        info = { title: 'N-méthyl de la pipérazine', kind: 'Amine tertiaire sp³', state: '<b>Protoné</b> à pH 7,4 (pKa ≈ 8, soit ≈ 80 % sous forme N⁺–H) : charge +.',
+          donor: ['yes', 'Une fois protoné, il porte un H (N⁺–H) : bon donneur, renforcé par la charge positive.'],
+          acceptor: ['no', 'Son doublet libre est déjà engagé dans la liaison avec le H⁺ : il n\'a plus rien pour accepter. (La petite fraction non protonée, elle, serait accepteur.)'],
+          others: [{ t: 'ionic', txt: '<b>Ionique (pont salin)</b> — la charge + attire un carboxylate COO⁻ (Asp, Glu).' }] };
+      } else if (inRing(i)) {
+        info = { title: 'N de la pipérazine (côté chaîne propoxy)', kind: 'Amine tertiaire sp³', state: 'Non protoné : l\'autre N porte déjà une charge +, en ajouter une seconde juste à côté serait très défavorable.',
+          donor: ['no', 'Ses trois substituants sont des carbones : aucun H à donner.'],
+          acceptor: ['weak', 'Il a un doublet libre sp³, donc accepteur en théorie ; mais il est encombré par ses trois substituants et tourné vers le solvant.'],
+          others: [] };
+      } else {
+        info = { title: 'N–H anilinique', kind: 'Amine secondaire entre deux cycles aromatiques, quasi plane', state: 'Non protoné à pH 7,4 : très peu basique.',
+          donor: ['yes', 'Il porte un H, et la liaison N–H est polarisée (Nδ⁻–Hδ⁺).'],
+          acceptor: ['no', 'Son doublet libre est délocalisé dans les deux cycles aromatiques voisins (mésomérie) : il n\'est plus disponible pour capter un H. C\'est aussi pourquoi il n\'est pas basique.'],
+          others: [] };
+      }
+    } else if (e === 'O') {
+      var meo = nb.some(isMethyl);
+      info = { title: meo ? 'O du méthoxy (Ar–O–CH₃)' : 'O de l\'éther (Ar–O–CH₂, chaîne propoxy)', kind: 'Oxygène d\'éther aromatique', state: 'Neutre, non ionisable.',
+        donor: ['no', 'Il est lié à deux carbones, pas à un H : rien à donner.'],
+        acceptor: ['weak', 'Il a deux doublets libres, mais l\'un est en partie délocalisé dans le cycle aromatique : accepteur faible.'],
+        others: [] };
+    } else if (e === 'CL') {
+      info = { title: 'Chlore (aryl–Cl)', kind: 'Halogène porté par un cycle aromatique', state: 'Neutre : liaison C–Cl covalente, ce n\'est pas un ion chlorure.',
+        donor: ['no', NO_H],
+        acceptor: ['no', 'Ses doublets libres sont diffus (gros atome) et très peu basiques : accepteur négligeable.'],
+        others: [HYDRO, { t: 'halo', txt: '<b>Liaison halogène</b> — dans l\'axe de C–Cl, une petite zone δ⁺ (« trou σ ») peut pointer vers un O de C=O.' }] };
+    } else if (nb.some(function (j) { return elem(ligAtoms[j]) === 'N' && ligGraph[j].length === 1; })) {
+      group = [i].concat(nb.filter(function (j) { return elem(ligAtoms[j]) === 'N'; }));
+      info = carbonInfo('C du nitrile (C≡N)', 'Carbone sp, linéaire', [{ t: 'dipole', txt: '<b>Dipôle</b> — carbone δ⁺ du groupe C≡N ; c\'est le N, au bout, qui accepte la liaison H.' }]);
+      info.donor = ['no', 'Il ne porte aucun H.'];
+    } else if (isMethyl(i)) {
+      info = elem(ligAtoms[nb[0]]) === 'O'
+        ? carbonInfo('CH₃ du méthoxy', 'Carbone sp³, groupe méthyle')
+        : carbonInfo('CH₃ porté par le N⁺ de la pipérazine', 'Carbone sp³, groupe méthyle');
+    } else if (ring && ring.aromatic) {
+      group = ring.idx;
+      info = carbonInfo('Carbone aromatique', 'Carbone sp² — ' + ring.name, [PISTACK, HYDRO, CATPI]);
+    } else if (ring) {
+      info = carbonInfo('CH₂ de la pipérazine', 'Carbone sp³ du cycle pipérazine');
+    } else {
+      info = carbonInfo('CH₂ de la chaîne propoxy', 'Carbone sp³, chaîne flexible entre la quinoléine et la pipérazine');
+    }
+    info.el = e; info.owner = 'Bosutinib';
+    info.pts = group.map(function (j) { return v(ligAtoms[j]); });
+    info.xtal = ligObserved(i);
+    return info;
+  }
+
+  var AROM = { PHE: RING, TYR: RING, TRP: ['CG', 'CD1', 'CD2', 'NE1', 'CE2', 'CE3', 'CZ2', 'CZ3', 'CH2'], HIS: ['CG', 'ND1', 'CD2', 'CE1', 'NE2'] };
+  function resInfo(a) {
+    var n = a.atom, r = a.resn, e = elem(a), info;
+    var arom = AROM[r] && AROM[r].indexOf(n) >= 0;
+    if (n === 'N') {
+      info = r === 'PRO'
+        ? { title: 'N du squelette (proline)', kind: 'Azote d\'amide tertiaire', state: 'Neutre.', donor: ['no', 'Dans la proline, le N est lié au cycle : il n\'a pas de H.'],
+            acceptor: ['no', 'Son doublet libre est délocalisé vers le C=O voisin (mésomérie de l\'amide).'], others: [] }
+        : { title: 'N–H du squelette peptidique', kind: 'Azote d\'amide (liaison peptidique), plan', state: 'Neutre : un amide n\'est pas basique, il n\'est pas protoné à pH 7,4.',
+            donor: ['yes', 'Il porte un H, et la liaison N–H est polarisée (Nδ⁻–Hδ⁺).'],
+            acceptor: ['no', 'Son doublet libre est délocalisé vers le C=O voisin (mésomérie de l\'amide) : il n\'est pas disponible pour capter un H.'], others: [] };
+    } else if (n === 'O' || n === 'OXT') {
+      info = { title: 'O du carbonyle peptidique (C=O)', kind: 'Oxygène sp² d\'amide', state: 'Neutre.',
+        donor: ['no', NO_H],
+        acceptor: ['yes', 'Deux doublets libres et une charge partielle δ⁻ renforcée par la mésomérie de l\'amide : très bon accepteur.'], others: [] };
+    } else if (n === 'CA' || n === 'C') {
+      info = carbonInfo(n === 'CA' ? 'Carbone α du squelette' : 'C du carbonyle peptidique', n === 'CA' ? 'Carbone sp³' : 'Carbone sp² (C=O)');
+      if (n === 'C') info.others = [];
+    } else if ((r === 'SER' && n === 'OG') || (r === 'THR' && n === 'OG1') || (r === 'TYR' && n === 'OH')) {
+      info = { title: r === 'TYR' ? 'O–H du phénol (tyrosine)' : 'O–H de l\'alcool (chaîne latérale)', kind: 'Oxygène d\'hydroxyle',
+        state: 'Non ionisé à pH 7,4 (pKa ' + (r === 'TYR' ? '≈ 10' : '> 13') + ') : reste O–H.',
+        donor: ['yes', 'Il porte un H, et la liaison O–H est très polarisée (Oδ⁻–Hδ⁺). Le O–H peut pivoter pour s\'orienter vers l\'accepteur.'],
+        acceptor: ['yes', 'Il a deux doublets libres : il peut aussi capter un H.'], others: [] };
+    } else if ((r === 'ASP' && (n === 'OD1' || n === 'OD2')) || (r === 'GLU' && (n === 'OE1' || n === 'OE2'))) {
+      info = { title: 'O du carboxylate (COO⁻)', kind: 'Oxygène d\'acide carboxylique déprotoné',
+        state: '<b>Déprotoné</b> à pH 7,4 (pKa ≈ ' + (r === 'ASP' ? '3,9' : '4,2') + ') : charge −, répartie sur les deux O par mésomérie.',
+        donor: ['no', 'À pH 7,4 il a perdu son H : rien à donner.'],
+        acceptor: ['yes', 'Doublets libres et charge négative : excellent accepteur.'],
+        others: [{ t: 'ionic', txt: '<b>Ionique (pont salin)</b> — la charge − attire un cation : amine protonée N⁺–H, Lys, Arg.' }] };
+    } else if ((r === 'ASN' && n === 'OD1') || (r === 'GLN' && n === 'OE1')) {
+      info = { title: 'O de l\'amide (chaîne latérale)', kind: 'Oxygène sp² d\'amide', state: 'Neutre.', donor: ['no', NO_H],
+        acceptor: ['yes', 'Deux doublets libres et une charge partielle δ⁻ : bon accepteur.'], others: [] };
+    } else if ((r === 'ASN' && n === 'ND2') || (r === 'GLN' && n === 'NE2')) {
+      info = { title: 'NH₂ de l\'amide (chaîne latérale)', kind: 'Azote d\'amide primaire', state: 'Neutre : un amide n\'est pas basique.',
+        donor: ['yes', 'Il porte deux H polarisés.'],
+        acceptor: ['no', 'Son doublet libre est délocalisé vers le C=O voisin (mésomérie de l\'amide).'], others: [] };
+    } else if (r === 'LYS' && n === 'NZ') {
+      info = { title: 'NH₃⁺ de la lysine', kind: 'Amine primaire sp³', state: '<b>Protonée</b> à pH 7,4 (pKa ≈ 10,5) : charge +.',
+        donor: ['yes', 'Trois H portés par un N chargé + : très bon donneur.'],
+        acceptor: ['no', 'Son doublet libre est engagé dans la liaison avec le H⁺.'],
+        others: [{ t: 'ionic', txt: '<b>Ionique (pont salin)</b> — avec un COO⁻.' }, { t: 'pi', txt: '<b>Cation–π</b> — avec la face d\'un cycle aromatique.' }] };
+    } else if (r === 'ARG' && (n === 'NE' || n === 'NH1' || n === 'NH2')) {
+      info = { title: 'N du guanidinium (arginine)', kind: 'Azote sp², charge délocalisée sur trois N', state: '<b>Protoné</b> à pH 7,4 (pKa ≈ 12,5) : charge +.',
+        donor: ['yes', 'Il porte un ou deux H, sur un groupe chargé + : très bon donneur.'],
+        acceptor: ['no', 'Tous les doublets participent à la délocalisation de la charge : aucun n\'est disponible.'],
+        others: [{ t: 'ionic', txt: '<b>Ionique (pont salin)</b> — avec un COO⁻.' }, { t: 'pi', txt: '<b>Cation–π</b> — avec la face d\'un cycle aromatique.' }] };
+    } else if (r === 'HIS' && (n === 'ND1' || n === 'NE2')) {
+      info = { title: 'N de l\'imidazole (histidine)', kind: 'Azote aromatique sp²', state: 'Majoritairement neutre à pH 7,4 (pKa ≈ 6) : un seul des deux N du cycle porte un H.',
+        donor: ['maybe', 'Oui s\'il est le N qui porte le H (son doublet est alors dans le système π).'],
+        acceptor: ['maybe', 'Oui s\'il est le N sans H : son doublet libre est dans le plan du cycle, disponible. Les rayons X ne disent pas lequel des deux porte le H.'],
+        others: [PISTACK] };
+    } else if (r === 'TRP' && n === 'NE1') {
+      info = { title: 'N–H de l\'indole (tryptophane)', kind: 'Azote aromatique sp²', state: 'Neutre, non basique.',
+        donor: ['yes', 'Il porte un H polarisé.'],
+        acceptor: ['no', 'Son doublet libre fait partie du système aromatique (sextet π) : il n\'est pas disponible.'], others: [PISTACK] };
+    } else if (e === 'S') {
+      info = { title: r === 'MET' ? 'S du thioéther (méthionine)' : 'S du thiol (cystéine)', kind: 'Soufre sp³',
+        state: r === 'MET' ? 'Neutre, non ionisable.' : 'Majoritairement S–H à pH 7,4 (pKa ≈ 8,3).',
+        donor: r === 'MET' ? ['no', 'Il est lié à deux carbones : aucun H.'] : ['weak', 'S–H est peu polarisé (le soufre est peu électronégatif) : donneur faible.'],
+        acceptor: ['weak', 'Il a des doublets libres, mais diffus (gros atome, peu électronégatif) : accepteur faible.'],
+        others: [HYDRO] };
+    } else if (e === 'C' && arom) {
+      info = carbonInfo('Carbone aromatique', 'Carbone sp² du cycle', [PISTACK, HYDRO, CATPI]);
+    } else if (e === 'C') {
+      info = carbonInfo(r === 'ALA' && n === 'CB' ? 'CH₃ de l\'alanine' : 'Carbone aliphatique (chaîne latérale)', 'Carbone sp³');
+    } else {
+      info = { title: 'Atome ' + n, kind: '', state: '', donor: ['maybe', 'Dépend de la présence d\'un H lié à cet atome.'], acceptor: ['maybe', 'Dépend de la disponibilité d\'un doublet libre.'], others: [] };
+    }
+    var t = TARGETS.filter(function (x) { return x.foundResi === a.resi && x.resn === r && x.all.length; })[0];
+    var code = t ? t.code + t.resi : r.charAt(0) + r.slice(1).toLowerCase() + a.resi;
+    info.el = e; info.owner = code + ' · atome ' + n;
+    var pts = [v(a)];
+    if (arom) pts = (t ? t.all : resAtoms(r, a.resi, a.chain)).filter(function (x) { return AROM[r].indexOf(x.atom) >= 0; }).map(v);
+    info.pts = pts;
+    info.xtal = resObserved(a, t, arom);
+    return info;
+  }
+
+  function typed(t, html) { return '<p><b style="color:' + typeColor(t) + '">' + TYPES[t].label + '</b> ' + html + '</p>'; }
+  function resName(a) { return a.resn.charAt(0) + a.resn.slice(1).toLowerCase() + a.resi; }
+  // Ce que le cristal montre pour un atome du bosutinib.
+  function ligObserved(i) {
+    var out = '';
+    TARGETS.forEach(function (t) {
+      if (!t.all.length || !t.segments.length) return;
+      if (t.ligIdx === i || (t.ligRing && t.ligRing.idx.indexOf(i) >= 0)) {
+        out += typed(t.shown, 'avec <b>' + t.code + t.resi + '</b> (' + (t.part === 'main' ? 'chaîne principale' : 'chaîne latérale') + ')' +
+          (t.waters.length ? ', relayée par une molécule d\'eau' : ' · ' + fmt(t.segments[0][2])) +
+          (t.shown === 'ionic' && t.segments[0][2] > 4 ? ' — attraction à longue portée : trop loin pour un pont salin direct dans ce cristal' : ''));
+      }
+    });
+    var prot = model.selectedAtoms({ chain: ligChain, hetflag: false });
+    var e = elem(ligAtoms[i]);
+    if (!out) {
+      if (e === 'N' || e === 'O') {
+        var pol = minDist([ligAtoms[i]], prot.concat(model.selectedAtoms({ resn: 'HOH' })), null, function (b) { var x = elem(b); return x === 'N' || x === 'O'; });
+        out += pol.d <= 3.5
+          ? '<p>Un partenaire polaire est à portée de liaison H : <b>' + (pol.b.resn === 'HOH' ? 'une molécule d\'eau' : resName(pol.b) + ' (atome ' + pol.b.atom + ')') + '</b>, à ' + fmt(pol.d) + '.</p>'
+          : '<p>Aucun N ni O de la protéine (ni eau) à moins de 3,5 Å : <b>pas de liaison H ici</b>, même si l\'atome en est capable.</p>';
+      } else {
+        out += '<p>Pas d\'interaction dirigée avec les acides aminés de l\'exercice.</p>';
+      }
+    }
+    var near = minDist([ligAtoms[i]], prot);
+    if (near.b) out += '<p class="muted">Atome de la protéine le plus proche : ' + resName(near.b) + ' (' + near.b.atom + '), à ' + fmt(near.d) + '.</p>';
+    return out;
+  }
+  // Ce que le cristal montre pour un atome d'acide aminé.
+  function resObserved(a, t, arom) {
+    var out = '';
+    var near = minDist([a], ligAtoms);
+    if (t && t.segments.length) {
+      var involved = t.shown === 'pi' ? arom : t.atoms.indexOf(a.atom) >= 0;
+      out += involved
+        ? typed(t.shown, '— ' + (t.detail || '') + (t.shown !== 'pi' && !t.waters.length ? ' · ' + fmt(t.segments[0][2]) : ''))
+        : '<p>Cet atome ne porte pas l\'interaction de ' + t.code + t.resi + '. ' + t.why + '</p>';
+    } else if (!t) {
+      out += '<p>Résidu voisin de la poche, hors de la liste de l\'exercice.</p>';
+    }
+    out += '<p class="muted">Atome du bosutinib le plus proche : ' + describeLigAtom(near.ib) + ', à ' + fmt(near.d) + '.</p>';
+    return out;
+  }
+
+  var BADGE = { yes: 'Oui', no: 'Non', weak: 'Faible', maybe: 'Selon le cas' };
+  function openAtomCard(info) {
+    var sym = info.el.charAt(0) + info.el.slice(1).toLowerCase();
+    $('acEl').textContent = sym;
+    $('acEl').style.background = carbonMap('#94a3b8')[info.el] || '#94a3b8';
+    $('acTitle').textContent = info.title;
+    $('acSub').textContent = info.owner + (info.kind ? ' — ' + info.kind : '');
+    function hb(role, d) {
+      return '<div class="ac-hb"><span class="role">' + role + '</span><span class="ac-badge ' + d[0] + '">' + BADGE[d[0]] + '</span><span class="why">' + d[1] + '</span></div>';
+    }
+    var html = '';
+    if (info.state) html += '<h4>État à pH 7,4</h4><p>' + info.state + '</p>';
+    html += '<h4>Liaison hydrogène</h4>' + hb('Donneur de H', info.donor) + hb('Accepteur de H', info.acceptor);
+    if (info.others.length) {
+      html += '<h4>Autres interactions possibles</h4><ul class="ac-list">' + info.others.map(function (o) {
+        return '<li><i style="background:' + (TYPES[o.t] ? typeColor(o.t) : 'var(--muted)') + '"></i><span>' + o.txt + '</span></li>';
+      }).join('') + '</ul>';
+    }
+    html += '<h4>Dans le cristal 3UE4</h4><div class="ac-xtal">' + info.xtal + '</div>';
+    $('acBody').innerHTML = html;
+    var card = $('atomCard');
+    card.hidden = true; void card.offsetWidth; card.hidden = false; // rejoue l'animation d'ouverture
+    card.scrollTop = 0;
+    state.pick = info.pts;
+    drawOverlays(); viewer.render();
+    // Sur grand écran, la fiche ne doit pas cacher l'atome choisi : on décale la vue si besoin.
+    if (getComputedStyle(card).position === 'absolute') {
+      var sx = viewer.modelToScreen(centroid(info.pts)).x;
+      var edge = card.getBoundingClientRect().right + 70;
+      if (sx < edge) viewer.translate(edge - sx, 0, 300);
+    }
+  }
+  function closeAtomCard() {
+    if ($('atomCard').hidden) return;
+    $('atomCard').hidden = true;
+    state.pick = null;
+    if (viewer) { drawOverlays(); viewer.render(); }
+  }
+  function nearestLigIdx(atom) {
+    var best = -1, bd = Infinity;
+    ligAtoms.forEach(function (a, i) { var d = dist(a, atom); if (d < bd) { bd = d; best = i; } });
+    return best;
+  }
+  function showTip(text, ev) {
+    if (!ev) return;
+    var tip = $('tooltip'), r = document.querySelector('.stage').getBoundingClientRect();
+    tip.textContent = text;
+    tip.style.left = (ev.clientX - r.left + 12) + 'px';
+    tip.style.top = (ev.clientY - r.top + 12) + 'px';
+    tip.style.display = 'block';
+    $('viewer').style.cursor = 'pointer';
+  }
+  function hideTip() { $('tooltip').style.display = 'none'; $('viewer').style.cursor = ''; }
 
   // ───────────────────────── Rendu ─────────────────────────
   function carbonMap(c) {
@@ -795,6 +1106,14 @@ if (!window.$3Dmol) document.write('<script src="https://unpkg.com/3dmol@2.5.5/b
     ligModel.setStyle({}, state.ligSpheres
       ? { sphere: { scale: 0.95, colorscheme: { prop: 'elem', map: map } } }
       : { stick: { radius: 0.2, colorscheme: { prop: 'elem', map: map } }, sphere: { scale: 0.25, colorscheme: { prop: 'elem', map: map } } });
+    // Une fois en place, chaque atome du bosutinib est cliquable (fiche) et survolable.
+    if (state.progress >= 1 && !state.playing) {
+      ligModel.setClickable({}, true, function (atom) { hideTip(); openAtomCard(ligInfo(nearestLigIdx(atom))); });
+      ligModel.setHoverable({}, true, function (atom, vw, ev) {
+        var d = describeLigAtom(nearestLigIdx(atom));
+        showTip('Bosutinib · ' + d.replace(/^(le |la |l')/, '') + ' — cliquer pour la fiche', ev);
+      }, hideTip);
+    }
   }
 
   // L'étiquette se place sur l'atome du résidu le plus éloigné du ligand :
@@ -834,6 +1153,10 @@ if (!window.$3Dmol) document.write('<script src="https://unpkg.com/3dmol@2.5.5/b
         viewer.addSphere({ center: t.hydrogen.h, radius: 0.2, color: '#f1f5f9' });
       }
     });
+    // Halo autour de l'atome (ou du groupe) dont la fiche est ouverte.
+    (state.pick || []).forEach(function (p) {
+      viewer.addSphere({ center: p, radius: 0.62, color: cssVar('--accent'), opacity: 0.5, alpha: 0.5 });
+    });
     // Pendant l'animation, l'étiquette du ligand ne suivrait pas : elle revient à l'arrivée.
     if (state.labels && !state.playing) {
       var lc = add(ligCenter, mul(pathDir, (1 - easeInOut(state.progress)) * 22));
@@ -865,6 +1188,7 @@ if (!window.$3Dmol) document.write('<script src="https://unpkg.com/3dmol@2.5.5/b
   }
   function play() {
     if (state.playing) { stop(); return; }
+    closeAtomCard();
     state.playing = true;
     setPlayButton();
     if (state.progress >= 1) state.progress = 0;
@@ -877,7 +1201,6 @@ if (!window.$3Dmol) document.write('<script src="https://unpkg.com/3dmol@2.5.5/b
       drawLigand();
       if (state.progress >= 1) { stop(); redraw(); viewer.zoomTo(pocketSelection(), 900); return; }
       viewer.render();
-      window.__frames = (window.__frames || 0) + 1;
       rafId = requestAnimationFrame(step);
     }
     // La première image montre le ligand hors de la protéine.
@@ -936,6 +1259,7 @@ if (!window.$3Dmol) document.write('<script src="https://unpkg.com/3dmol@2.5.5/b
       li.querySelector('.eye').addEventListener('click', function (ev) {
         ev.stopPropagation();
         t.visible = !t.visible;
+        closeAtomCard();
         renderList(); redraw();
       });
       li.addEventListener('click', function () { focusTarget(i); });
@@ -1020,6 +1344,7 @@ if (!window.$3Dmol) document.write('<script src="https://unpkg.com/3dmol@2.5.5/b
     $('sources').addEventListener('click', function (ev) { if (ev.target === $('sources')) toggleSources(false); });
     document.addEventListener('keydown', function (ev) {
       if (!$('sources').hidden) { if (ev.key === 'Escape') toggleSources(false); return; }
+      if (ev.key === 'Escape' && !$('atomCard').hidden) { closeAtomCard(); return; }
       if (ev.key === 'Escape' && !$('hint').hidden) { toggleHelp(false); return; }
       if (ev.key.toLowerCase() === 'h' && !ev.ctrlKey && !ev.metaKey && !ev.altKey) { toggleHelp(); return; }
       if (!model || ev.ctrlKey || ev.metaKey || ev.altKey) return;
@@ -1034,34 +1359,34 @@ if (!window.$3Dmol) document.write('<script src="https://unpkg.com/3dmol@2.5.5/b
     $('progress').addEventListener('input', function () {
       if (!model) return;
       stop();
+      closeAtomCard();
       state.progress = $('progress').value / 1000;
       setPlayButton();
       setPhase();
       redraw();
     });
     $('allOn').addEventListener('click', function () { TARGETS.forEach(function (t) { t.visible = true; }); renderList(); if (model) redraw(); });
-    $('allOff').addEventListener('click', function () { TARGETS.forEach(function (t) { t.visible = false; }); renderList(); if (model) redraw(); });
+    $('allOff').addEventListener('click', function () { closeAtomCard(); TARGETS.forEach(function (t) { t.visible = false; }); renderList(); if (model) redraw(); });
+    $('acClose').addEventListener('click', closeAtomCard);
     document.addEventListener('fullscreenchange', function () { if (viewer) setTimeout(function () { viewer.resize(); viewer.render(); }, 50); });
     window.addEventListener('resize', function () { if (viewer) viewer.resize(); });
   }
 
   function wireHover() {
-    var tip = $('tooltip'), stage = document.querySelector('.stage');
     var names = { ALA: 'Alanine', ARG: 'Arginine', ASN: 'Asparagine', ASP: 'Aspartate', CYS: 'Cystéine', GLN: 'Glutamine', GLU: 'Glutamate',
       GLY: 'Glycine', HIS: 'Histidine', ILE: 'Isoleucine', LEU: 'Leucine', LYS: 'Lysine', MET: 'Méthionine', PHE: 'Phénylalanine',
       PRO: 'Proline', SER: 'Sérine', THR: 'Thréonine', TRP: 'Tryptophane', TYR: 'Tyrosine', VAL: 'Valine', HOH: 'Eau' };
     model.setHoverable({}, true, function (atom, vw, ev) {
-      if (!ev) return;
-      var r = stage.getBoundingClientRect();
-      tip.textContent = (names[atom.resn] || atom.resn) + ' ' + atom.resi + ' · atome ' + atom.atom;
-      tip.style.left = (ev.clientX - r.left + 12) + 'px';
-      tip.style.top = (ev.clientY - r.top + 12) + 'px';
-      tip.style.display = 'block';
-    }, function () { tip.style.display = 'none'; });
+      showTip((names[atom.resn] || atom.resn) + ' ' + atom.resi + ' · atome ' + atom.atom + ' — cliquer pour la fiche', ev);
+    }, hideTip);
+    // Clic sur un atome d'acide aminé : sa fiche s'ouvre et sa carte est surlignée dans la liste.
     model.setClickable({ hetflag: false }, true, function (atom) {
       var i = -1;
       TARGETS.forEach(function (t, k) { if (t.foundResi === atom.resi && t.resn === atom.resn) i = k; });
-      if (i >= 0) focusTarget(i);
+      state.focus = i >= 0 ? i : null;
+      renderList();
+      hideTip();
+      openAtomCard(resInfo(atom));
     });
   }
 
@@ -1129,7 +1454,7 @@ if (!window.$3Dmol) document.write('<script src="https://unpkg.com/3dmol@2.5.5/b
     wireHover();
     $('overlay').hidden = true;
     root.classList.add('ready');
-    window.__bosutinib = { viewer: viewer, targets: TARGETS, state: state, actions: actions };
+    window.__bosutinib = { viewer: viewer, targets: TARGETS, state: state, actions: actions, ligInfo: ligInfo, resInfo: resInfo };
   }
 
   // Thème mémorisé (confort, facultatif)
