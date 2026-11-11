@@ -18,6 +18,8 @@ Page interactive pour l'exercice « interactions intermoléculaires » : le bosu
 
 - **▶** en bas : rejouer l'entrée du bosutinib ; la frise permet d'avancer ou de reculer.
 - Barre d'outils : zoom, noms des acides aminés, interactions et distances, résidus voisins, surface de la poche, ruban, style du ligand, thème clair / sombre, capture PNG, plein écran.
+- **Poche** : surface colorée par nature des acides aminés à pH 7,4 (hydrophobe, polaire, chargée).
+- Structure 2D du bosutinib dans le panneau : survoler un atome le montre en 3D (et inversement), cliquer ouvre sa fiche.
 - **?** en bas à droite : comment faire tourner, zoomer et déplacer la vue.
 - Cliquer sur une carte de la liste zoome sur l'acide aminé ; l'œil le cache.
 - **Cliquer sur un atome dans la scène** (bosutinib ou acide aminé) ouvre sa fiche : état à pH 7,4, donneur / accepteur de liaison H et pourquoi, autres interactions possibles, et ce que montre le cristal.

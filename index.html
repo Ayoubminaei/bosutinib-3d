@@ -234,6 +234,30 @@
   :root { --yes: #4ade80; --no: #f87171; }
   :root[data-theme="light"] { --yes: #15803d; --no: #dc2626; }
 
+  /* Légende de la surface de la poche */
+  .surf-legend {
+    position: absolute; right: 12px; top: 62px; z-index: 5;
+    display: grid; gap: 5px; padding: 9px 11px; font-size: 12px;
+    background: color-mix(in srgb, var(--card) 88%, transparent); backdrop-filter: blur(8px);
+    border: 1px solid var(--line); border-radius: 10px; box-shadow: var(--shadow);
+  }
+  .surf-legend[hidden] { display: none; }
+  .surf-legend b { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 600; }
+  .surf-legend span { display: flex; align-items: center; gap: 7px; }
+  .surf-legend i { width: 11px; height: 11px; border-radius: 3px; flex: none; }
+  .surf-legend small { color: var(--muted); }
+
+  /* Structure 2D du bosutinib */
+  .lig2d { margin-top: 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--card-2); padding: 6px 6px 8px; }
+  .lig2d[hidden] { display: none; }
+  .lig2d svg { display: block; width: 100%; height: auto; }
+  .lig2d .bond { stroke: var(--text); stroke-width: .075; stroke-linecap: round; fill: none; }
+  .lig2d text { font-weight: 600; font-size: .58px; text-anchor: middle; dominant-baseline: central; stroke: var(--card-2); stroke-width: .3px; paint-order: stroke; pointer-events: none; }
+  .lig2d .halo { fill: var(--accent); opacity: 0; transition: opacity .12s; }
+  .lig2d .halo.on { opacity: .45; }
+  .lig2d .hit { fill: transparent; cursor: pointer; }
+  .lig2d p { margin: 4px 6px 0; }
+
   .overlay {
     position: absolute; inset: 0; z-index: 8;
     display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 14px;
@@ -315,6 +339,8 @@
     .src-btn span { display: none; }
     .src-btn { padding: 0 9px; }
     .scrub b { min-width: 0; max-width: 34%; }
+    .surf-legend { top: 56px; right: 8px; padding: 7px 9px; font-size: 11.5px; }
+    .surf-legend small { display: none; }
     .atom-card { position: fixed; left: 8px; right: 8px; top: auto; bottom: 8px; width: auto; max-height: 58dvh; z-index: 50; }
     header.top .sub { display: none; }
   }
@@ -348,7 +374,7 @@
       <button class="tb" id="btnLabels" aria-pressed="true" title="Afficher / cacher les noms des acides aminés (L)"><svg viewBox="0 0 24 24"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.2"/></svg><span class="lbl">Noms</span></button>
       <button class="tb" id="btnInter" aria-pressed="true" title="Afficher / cacher les interactions (I)"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="2.5"/><circle cx="19" cy="12" r="2.5"/><path d="M8 12h2M12 12h1M15 12h1"/></svg><span class="lbl">Interactions</span></button>
       <button class="tb" id="btnNeighbors" aria-pressed="false" title="Autres résidus du site, à moins de 5 Å (N)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="8" stroke-dasharray="2 3"/></svg><span class="lbl">Voisins</span></button>
-      <button class="tb" id="btnSurface" aria-pressed="false" title="Surface de la poche (S)"><svg viewBox="0 0 24 24"><path d="M4 16c2-6 6-9 8-9s6 3 8 9"/><path d="M2 20h20"/></svg><span class="lbl">Poche</span></button>
+      <button class="tb" id="btnSurface" aria-pressed="false" title="Surface de la poche, colorée par nature : hydrophobe, polaire, chargée (S)"><svg viewBox="0 0 24 24"><path d="M4 16c2-6 6-9 8-9s6 3 8 9"/><path d="M2 20h20"/></svg><span class="lbl">Poche</span></button>
       <button class="tb" id="btnCartoon" aria-pressed="true" title="Afficher / cacher le ruban de la protéine (C)"><svg viewBox="0 0 24 24"><path d="M3 8c3-4 6 4 9 0s6 4 9 0M3 16c3-4 6 4 9 0s6 4 9 0"/></svg></button>
       <button class="tb" id="btnLigStyle" title="Bosutinib : bâtonnets ou sphères (B)"><svg viewBox="0 0 24 24"><circle cx="6" cy="6" r="3"/><circle cx="18" cy="18" r="3"/><path d="M8.2 8.2l7.6 7.6"/></svg></button>
       <span class="sep"></span>
@@ -379,6 +405,12 @@
       </ul>
     </div>
     <div class="tooltip" id="tooltip"></div>
+    <div class="surf-legend" id="surfLegend" hidden>
+      <b>Surface de la poche</b>
+      <span><i style="background:#e3b04b"></i>Hydrophobe <small>Ala, Val, Leu, Ile, Met, Phe…</small></span>
+      <span><i style="background:#4ea8e8"></i>Polaire <small>Ser, Thr, Tyr, Asn, Gln…</small></span>
+      <span><i style="background:#e8609c"></i>Chargée à pH 7,4 <small>Asp, Glu (−) · Lys, Arg (+)</small></span>
+    </div>
 
     <div class="atom-card" id="atomCard" role="dialog" aria-labelledby="acTitle" hidden>
       <button class="modal-close" id="acClose" aria-label="Fermer la fiche">×</button>
@@ -409,6 +441,10 @@
         <span class="chip" style="color:var(--ionic)">NH⁺</span><span>N-méthylpipérazine <b>protonée</b> à pH 7,4 (pKa ≈ 8)</span>
         <span class="chip" style="color:var(--ionic)">COO⁻</span><span>Aspartate <b>déprotoné</b> à pH 7,4 (pKa ≈ 3,9)</span>
         <span class="chip" style="color:var(--hbond)">N:</span><span>N1 de la quinoléine, accepteur de liaison H (non protoné, pKa bas)</span>
+      </div>
+      <div class="lig2d" id="lig2d" hidden>
+        <svg id="lig2dSvg" role="img" aria-label="Structure 2D du bosutinib"></svg>
+        <p class="small muted">Survoler un atome le montre dans la scène 3D (et inversement) ; cliquer ouvre sa fiche.</p>
       </div>
     </section>
 
@@ -520,11 +556,46 @@ if (!window.$3Dmol) document.write('<script src="https://unpkg.com/3dmol@2.5.5/b
 
   var LIG_C = '#22c55e';
 
+  // Nature des acides aminés à pH 7,4 (His, pKa ≈ 6, est majoritairement neutre).
+  var NATURE = {
+    hydro:   { color: '#e3b04b', res: ['ALA', 'VAL', 'LEU', 'ILE', 'MET', 'PHE', 'TRP', 'PRO', 'GLY'] },
+    polar:   { color: '#4ea8e8', res: ['SER', 'THR', 'CYS', 'TYR', 'ASN', 'GLN', 'HIS'] },
+    charged: { color: '#e8609c', res: ['ASP', 'GLU', 'LYS', 'ARG'] }
+  };
+
+  // Structure 2D du bosutinib : [élément, x, y, étiquette]. Longueur de liaison = 1.
+  var T2D = {
+    atoms: [
+      ['N', 1.732, -1, 'N'], ['C', 2.598, -0.5], ['C', 2.598, 0.5], ['C', 1.732, 1], ['C', 0.866, 0.5],
+      ['C', 0, 1], ['C', -0.866, 0.5], ['C', -0.866, -0.5], ['C', 0, -1], ['C', 0.866, -0.5],
+      ['C', 3.464, 1], ['N', 4.33, 1.5, 'N'], ['N', 1.732, 2, 'NH'],
+      ['C', 2.232, 2.866], ['C', 1.732, 3.732], ['C', 2.232, 4.598], ['C', 3.232, 4.598], ['C', 3.732, 3.732], ['C', 3.232, 2.866],
+      ['CL', 0.732, 3.732, 'Cl'], ['CL', 3.732, 5.464, 'Cl'], ['O', 4.732, 3.732, 'O'], ['C', 5.232, 2.866, 'CH₃'],
+      ['O', -1.732, 1, 'O'], ['C', -1.732, 2, 'CH₃'],
+      ['O', -1.732, -1, 'O'], ['C', -2.598, -0.5], ['C', -3.464, -1], ['C', -4.33, -0.5],
+      ['N', -5.196, -1, 'N'], ['C', -6.062, -0.5], ['C', -6.928, -1], ['N', -6.928, -2, 'NH⁺'], ['C', -6.062, -2.5], ['C', -5.196, -2],
+      ['C', -7.794, -2.5, 'CH₃']
+    ],
+    // [a, b, ordre, centre du cycle pour décaler la double liaison vers l'intérieur]
+    bonds: [
+      [0, 1, 2, 'P'], [1, 2, 1], [2, 3, 2, 'P'], [3, 4, 1], [4, 9, 2, 'B'], [9, 0, 1], [4, 5, 1], [5, 6, 2, 'B'], [6, 7, 1], [7, 8, 2, 'B'], [8, 9, 1],
+      [2, 10, 1], [10, 11, 3], [3, 12, 1], [12, 13, 1],
+      [13, 14, 2, 'A'], [14, 15, 1], [15, 16, 2, 'A'], [16, 17, 1], [17, 18, 2, 'A'], [18, 13, 1],
+      [14, 19, 1], [16, 20, 1], [17, 21, 1], [21, 22, 1], [6, 23, 1], [23, 24, 1],
+      [7, 25, 1], [25, 26, 1], [26, 27, 1], [27, 28, 1], [28, 29, 1],
+      [29, 30, 1], [30, 31, 1], [31, 32, 1], [32, 33, 1], [33, 34, 1], [34, 29, 1], [32, 35, 1]
+    ],
+    centers: { P: [1.732, 0], B: [0, 0], A: [2.732, 3.732] }
+  };
+
   // ───────────────────────── État ─────────────────────────
   var state = {
     labels: true, inter: true, neighbors: false, surface: false, cartoon: true,
-    ligSpheres: false, progress: 1, playing: false, focus: null
+    ligSpheres: false, progress: 1, playing: false, focus: null,
+    pick: null, pickLig: null, hover: null, hoverLig: null
   };
+  var labelRefs = [], depthBusy = false, depthRaf = null;
+  var t2l = null, l2t = null; // correspondance atomes 2D ↔ atomes du ligand 3D
   var viewer, model, ligModel, ligAtoms = [], ligChain, ligResi, ligGraph, ligRings = [];
   var pathDir = null, tumbleAxis = null, ligCenter = null;
   var rafId = null;
@@ -874,6 +945,7 @@ if (!window.$3Dmol) document.write('<script src="https://unpkg.com/3dmol@2.5.5/b
       info = carbonInfo('CH₂ de la chaîne propoxy', 'Carbone sp³, chaîne flexible entre la quinoléine et la pipérazine');
     }
     info.el = e; info.owner = 'Bosutinib';
+    info.group = group;
     info.pts = group.map(function (j) { return v(ligAtoms[j]); });
     info.xtal = ligObserved(i);
     return info;
@@ -1026,6 +1098,8 @@ if (!window.$3Dmol) document.write('<script src="https://unpkg.com/3dmol@2.5.5/b
     card.hidden = true; void card.offsetWidth; card.hidden = false; // rejoue l'animation d'ouverture
     card.scrollTop = 0;
     state.pick = info.pts;
+    state.pickLig = info.group || null;
+    refresh2D();
     drawOverlays(); viewer.render();
     // Sur grand écran, la fiche ne doit pas cacher l'atome choisi : on décale la vue si besoin.
     if (getComputedStyle(card).position === 'absolute') {
@@ -1037,7 +1111,8 @@ if (!window.$3Dmol) document.write('<script src="https://unpkg.com/3dmol@2.5.5/b
   function closeAtomCard() {
     if ($('atomCard').hidden) return;
     $('atomCard').hidden = true;
-    state.pick = null;
+    state.pick = null; state.pickLig = null;
+    refresh2D();
     if (viewer) { drawOverlays(); viewer.render(); }
   }
   function nearestLigIdx(atom) {
@@ -1110,9 +1185,11 @@ if (!window.$3Dmol) document.write('<script src="https://unpkg.com/3dmol@2.5.5/b
     if (state.progress >= 1 && !state.playing) {
       ligModel.setClickable({}, true, function (atom) { hideTip(); openAtomCard(ligInfo(nearestLigIdx(atom))); });
       ligModel.setHoverable({}, true, function (atom, vw, ev) {
-        var d = describeLigAtom(nearestLigIdx(atom));
+        var li = nearestLigIdx(atom);
+        var d = describeLigAtom(li);
+        state.hoverLig = ligGroup(li); refresh2D();
         showTip('Bosutinib · ' + d.replace(/^(le |la |l')/, '') + ' — cliquer pour la fiche', ev);
-      }, hideTip);
+      }, function () { state.hoverLig = null; refresh2D(); hideTip(); });
     }
   }
 
@@ -1130,17 +1207,20 @@ if (!window.$3Dmol) document.write('<script src="https://unpkg.com/3dmol@2.5.5/b
   function drawOverlays() {
     viewer.removeAllLabels();
     viewer.removeAllShapes();
+    labelRefs = [];
     var done = state.progress >= 1;
     TARGETS.forEach(function (t) {
       if (!t.all.length || !t.visible) return;
       var col = typeColor(t.shown);
       if (state.labels) {
         var txt = t.code + t.resi + (t.foundResi !== t.resi ? ' (' + t.foundResi + ')' : '');
-        viewer.addLabel(txt, {
-          position: labelAnchor(t), backgroundColor: col, backgroundOpacity: 0.85, fontColor: '#06121f',
+        var pos = labelAnchor(t);
+        var style = {
+          position: pos, backgroundColor: col, backgroundOpacity: 0.85, fontColor: '#06121f',
           fontSize: 10, font: 'Inter, Arial, sans-serif', borderRadius: 4, padding: 1, inFront: true, showBackground: true,
           screenOffset: { x: 0, y: -8 }, alignment: 'bottomCenter'
-        });
+        };
+        labelRefs.push({ lab: viewer.addLabel(txt, style), pos: pos, style: style, level: 4 });
       }
       if (state.inter && done) {
         t.segments.forEach(function (s) {
@@ -1154,7 +1234,7 @@ if (!window.$3Dmol) document.write('<script src="https://unpkg.com/3dmol@2.5.5/b
       }
     });
     // Halo autour de l'atome (ou du groupe) dont la fiche est ouverte.
-    (state.pick || []).forEach(function (p) {
+    (state.pick || []).concat(done && state.hover ? state.hover : []).forEach(function (p) {
       viewer.addSphere({ center: p, radius: 0.62, color: cssVar('--accent'), opacity: 0.5, alpha: 0.5 });
     });
     // Pendant l'animation, l'étiquette du ligand ne suivrait pas : elle revient à l'arrivée.
@@ -1165,6 +1245,126 @@ if (!window.$3Dmol) document.write('<script src="https://unpkg.com/3dmol@2.5.5/b
         font: 'Inter, Arial, sans-serif', borderRadius: 4, padding: 1, inFront: true, showBackground: true, screenOffset: { x: 0, y: 18 }, alignment: 'topCenter'
       });
     }
+    if (!state.playing) updateLabelDepth();
+  }
+
+  // Profondeur d'un point dans le repère de la caméra (plus grand = plus près de l'œil).
+  function viewDepth(p, vw) {
+    var x = p.x + vw[0], y = p.y + vw[1], z = p.z + vw[2];
+    var qx = vw[4], qy = vw[5], qz = vw[6], qw = vw[7];
+    var tx = 2 * (qy * z - qz * y), ty = 2 * (qz * x - qx * z);
+    return z + qw * (2 * (qx * y - qy * x)) + (qx * ty - qy * tx);
+  }
+  // Les étiquettes du fond pâlissent et rapetissent : celles du premier plan restent lisibles.
+  function updateLabelDepth() {
+    depthRaf = null;
+    if (!labelRefs.length || depthBusy) return;
+    var vw = viewer.getView();
+    var zs = labelRefs.map(function (r) { return viewDepth(r.pos, vw); });
+    var lo = Math.min.apply(null, zs), hi = Math.max.apply(null, zs), span = hi - lo;
+    depthBusy = true;
+    labelRefs.forEach(function (r, k) {
+      var level = span < 4 ? 4 : Math.round(4 * (zs[k] - lo) / span);
+      if (level === r.level) return;
+      r.level = level;
+      var f = 0.3 + 0.7 * level / 4;
+      var st = {};
+      Object.keys(r.style).forEach(function (key) { st[key] = r.style[key]; });
+      st.backgroundOpacity = 0.85 * f; st.fontOpacity = 0.35 + 0.65 * level / 4; st.fontSize = 8 + level / 2;
+      viewer.setLabelStyle(r.lab, st);
+    });
+    depthBusy = false;
+  }
+  function scheduleLabelDepth() {
+    if (depthBusy || depthRaf) return;
+    depthRaf = requestAnimationFrame(updateLabelDepth);
+  }
+
+  // ───────────────────────── Structure 2D ─────────────────────────
+  // On retrouve chaque atome du dessin 2D dans le ligand 3D par appariement de graphes
+  // (même élément, mêmes voisins) : indépendant des noms d'atomes du fichier.
+  function match2D() {
+    var n = T2D.atoms.length;
+    if (n !== ligAtoms.length) return false;
+    var adj = T2D.atoms.map(function () { return []; });
+    T2D.bonds.forEach(function (b) { adj[b[0]].push(b[1]); adj[b[1]].push(b[0]); });
+    var order = [0], seen = { 0: true };
+    for (var q = 0; q < order.length; q++) adj[order[q]].forEach(function (x) { if (!seen[x]) { seen[x] = true; order.push(x); } });
+    var map = [], used = {};
+    function go(k) {
+      if (k === n) return true;
+      var a = order[k];
+      for (var j = 0; j < n; j++) {
+        if (used[j] || elem(ligAtoms[j]) !== T2D.atoms[a][0] || ligGraph[j].length !== adj[a].length) continue;
+        var ok = adj[a].every(function (x) { return map[x] === undefined || ligGraph[j].indexOf(map[x]) >= 0; });
+        if (!ok) continue;
+        map[a] = j; used[j] = true;
+        if (go(k + 1)) return true;
+        map[a] = undefined; used[j] = false;
+      }
+      return false;
+    }
+    if (!go(0)) return false;
+    t2l = map; l2t = [];
+    map.forEach(function (j, a) { l2t[j] = a; });
+    return true;
+  }
+  var groupCache = {};
+  function ligGroup(i) { return groupCache[i] || (groupCache[i] = ligInfo(i).group); }
+  function render2D() {
+    if (!match2D()) return;
+    var A = T2D.atoms, xs = A.map(function (a) { return a[1]; }), ys = A.map(function (a) { return -a[2]; });
+    var x0 = Math.min.apply(null, xs) - 1.1, x1 = Math.max.apply(null, xs) + 0.9;
+    var y0 = Math.min.apply(null, ys) - 0.7, y1 = Math.max.apply(null, ys) + 0.7;
+    var P = function (i) { return { x: A[i][1], y: -A[i][2] }; };
+    var line = function (a, b) { return '<line class="bond" x1="' + a.x.toFixed(3) + '" y1="' + a.y.toFixed(3) + '" x2="' + b.x.toFixed(3) + '" y2="' + b.y.toFixed(3) + '"/>'; };
+    var h = '';
+    A.forEach(function (a, i) { h += '<circle class="halo" data-t="' + i + '" cx="' + a[1] + '" cy="' + (-a[2]) + '" r=".5"/>'; });
+    T2D.bonds.forEach(function (b) {
+      var a = P(b[0]), c = P(b[1]), dx = c.x - a.x, dy = c.y - a.y;
+      var nx = -dy * 0.14, ny = dx * 0.14;
+      h += line(a, c);
+      if (b[2] === 3) {
+        h += line({ x: a.x + nx, y: a.y + ny }, { x: c.x + nx, y: c.y + ny }) + line({ x: a.x - nx, y: a.y - ny }, { x: c.x - nx, y: c.y - ny });
+      } else if (b[2] === 2) {
+        var ctr = T2D.centers[b[3]], mx = (a.x + c.x) / 2, my = (a.y + c.y) / 2;
+        if ((ctr[0] - mx) * nx + (-ctr[1] - my) * ny < 0) { nx = -nx; ny = -ny; }
+        h += line({ x: a.x + nx + dx * 0.14, y: a.y + ny + dy * 0.14 }, { x: c.x + nx - dx * 0.14, y: c.y + ny - dy * 0.14 });
+      }
+    });
+    var colors = { N: '#3b6cf6', O: '#ef4444', CL: '#16a34a' };
+    A.forEach(function (a) {
+      if (a[3]) h += '<text x="' + a[1] + '" y="' + (-a[2]) + '" fill="' + (colors[a[0]] || 'var(--text)') + '">' + a[3] + '</text>';
+    });
+    A.forEach(function (a, i) { h += '<circle class="hit" data-t="' + i + '" cx="' + a[1] + '" cy="' + (-a[2]) + '" r=".5"/>'; });
+    var svg = $('lig2dSvg');
+    svg.setAttribute('viewBox', [x0, y0, x1 - x0, y1 - y0].map(function (n) { return n.toFixed(2); }).join(' '));
+    svg.innerHTML = h;
+    $('lig2d').hidden = false;
+    var idx = function (ev) { var t = ev.target.getAttribute && ev.target.getAttribute('data-t'); return t === null || t === undefined || !ev.target.classList.contains('hit') ? -1 : t2l[+t]; };
+    function hover(i) {
+      var g = i >= 0 ? ligGroup(i) : null;
+      state.hoverLig = g;
+      state.hover = g && state.progress >= 1 ? g.map(function (j) { return v(ligAtoms[j]); }) : null;
+      refresh2D();
+      drawOverlays(); viewer.render();
+    }
+    svg.addEventListener('mouseover', function (ev) { var i = idx(ev); if (i >= 0) hover(i); });
+    svg.addEventListener('mouseout', function (ev) { if (idx(ev) >= 0) hover(-1); });
+    svg.addEventListener('click', function (ev) {
+      var i = idx(ev);
+      if (i < 0 || state.progress < 1) return;
+      state.hover = null;
+      openAtomCard(ligInfo(i));
+    });
+  }
+  function refresh2D() {
+    if (!l2t) return;
+    var on = {};
+    (state.pickLig || []).concat(state.hoverLig || []).forEach(function (j) { on[l2t[j]] = true; });
+    Array.prototype.forEach.call($('lig2dSvg').querySelectorAll('.halo'), function (c) {
+      c.classList.toggle('on', !!on[c.getAttribute('data-t')]);
+    });
   }
 
   function redraw() { applyStyles(); drawOverlays(); viewer.render(); }
@@ -1174,8 +1374,12 @@ if (!window.$3Dmol) document.write('<script src="https://unpkg.com/3dmol@2.5.5/b
     if (state.surface) {
       var light = document.documentElement.dataset.theme === 'light';
       var pocket = { chain: ligChain, hetflag: false, byres: true, within: { distance: 8, sel: { chain: ligChain, resi: ligResi, resn: LIGAND } } };
-      viewer.addSurface($3Dmol.SurfaceType.MS, { opacity: 0.55, color: light ? '#cbd5e1' : '#3b5878' }, pocket, { chain: ligChain, hetflag: false });
+      // Chaque résidu colore sa portion de surface selon sa nature à pH 7,4.
+      var map = {};
+      Object.keys(NATURE).forEach(function (k) { NATURE[k].res.forEach(function (r) { map[r] = NATURE[k].color; }); });
+      viewer.addSurface($3Dmol.SurfaceType.MS, { opacity: light ? 0.72 : 0.66, colorscheme: { prop: 'resn', map: map } }, pocket, { chain: ligChain, hetflag: false });
     }
+    $('surfLegend').hidden = !state.surface;
     viewer.render();
   }
 
@@ -1452,6 +1656,9 @@ if (!window.$3Dmol) document.write('<script src="https://unpkg.com/3dmol@2.5.5/b
     viewer.setZoomLimits(MIN_ZOOM, MAX_ZOOM);
     viewer.render();
     wireHover();
+    render2D();
+    viewer.setViewChangeCallback(scheduleLabelDepth);
+    updateLabelDepth();
     $('overlay').hidden = true;
     root.classList.add('ready');
     window.__bosutinib = { viewer: viewer, targets: TARGETS, state: state, actions: actions, ligInfo: ligInfo, resInfo: resInfo };
